@@ -23,6 +23,12 @@ SourceZ3="https://github.com/Z3Prover/z3/archive/refs/tags/z3-$Z3_VERSION.zip"
 BuildLLVMFromSource=false
 BuildZ3FromSource=false
 
+if [[ $1 == 'debug' ]]; then
+    BuildType="Debug"
+else
+    BuildType="Release"
+fi
+
 if [[ "$sysOS" == "Linux" ]]; then
     if [[ "$arch" == "aarch64" ]]; then
         LLVM="https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVM_VERSION/clang+llvm-$LLVM_VERSION-aarch64-linux-gnu.tar.xz"
@@ -116,7 +122,7 @@ function build_z3_from_source {
     mkdir z3-build
     cd z3-build
     # /* is a dirty hack to get z3-version...
-    cmake -DCMAKE_INSTALL_PREFIX="$SVFHOME/$Z3Home" -DZ3_BUILD_LIBZ3_SHARED=false ../z3-source/*
+    cmake -DCMAKE_INSTALL_PREFIX="$SVFHOME/$Z3Home" -DZ3_BUILD_LIBZ3_SHARED=false -DCMAKE_BUILD_TYPE="$BuildType" ../z3-source/*
     make -j${jobs}
     make install
 
@@ -137,7 +143,7 @@ function build_llvm_from_source {
     mkdir llvm-build
     cd llvm-build
     # /*/ is a dirty hack to get llvm-project-llvmorg-version...
-    cmake -DCMAKE_INSTALL_PREFIX="$SVFHOME/$LLVMHome" ../llvm-source/*/llvm
+    cmake -DCMAKE_INSTALL_PREFIX="$SVFHOME/$LLVMHome" -DCMAKE_BUILD_TYPE="$BuildType" ../llvm-source/*/llvm
     make -j${jobs}
     make install
 
@@ -198,25 +204,18 @@ echo "Z3_DIR=$Z3_DIR"
 ########
 # Build SVF
 ########
-if [[ $1 == 'debug' ]]
-then
-    rm -rf ./'Debug-build'
-    mkdir ./'Debug-build'
-    cd ./'Debug-build'
-    cmake -D CMAKE_BUILD_TYPE:STRING=Debug ../
-else
-    rm -rf ./'Release-build'
-    mkdir ./'Release-build'
-    cd ./'Release-build'
-    cmake ../
-fi
+rm -rf ./"$BuildType-build"
+mkdir ./"$BuildType-build"
+cd ./"$BuildType-build"
+
+cmake -DCMAKE_BUILD_TYPE="$BuildType" ../
 make -j ${jobs}
 
 ########
 # Set up environment variables of SVF
 ########
 cd ../
-if [[ $1 == 'debug' ]]
+if [[ "$BuildType" == "Debug" ]]
 then
   . ./setup.sh debug
 else
