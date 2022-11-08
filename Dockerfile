@@ -7,10 +7,11 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN set -e
 
 # Define LLVM version.
-ENV llvm_version=13.0.0
+ENV llvm_version=15.0.0
 
 # Define home directory
 ENV HOME=/home/SVF-tools
+ENV SVF_DIR=${HOME}/SVF
 
 # Define dependencies.
 ENV lib_deps="make g++-8 gcc-8 git zlib1g-dev libncurses5-dev build-essential libssl-dev libpcre2-dev zip vim"
@@ -21,10 +22,12 @@ RUN apt-get update --fix-missing
 RUN apt-get install -y $build_deps $lib_deps
 
 # Fetch and build SVF source.
-RUN echo "Downloading LLVM and building SVF to " ${HOME}
-WORKDIR ${HOME}
-RUN git clone "https://github.com/SVF-tools/SVF.git"
-WORKDIR ${HOME}/SVF
+RUN echo "Copying SVF to " ${SVF_DIR}
+
+COPY . ${SVF_DIR}
+
+WORKDIR ${SVF_DIR}
+
 RUN echo "Building SVF ..."
 RUN bash ./build.sh 
 
